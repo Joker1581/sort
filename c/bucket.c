@@ -1,71 +1,77 @@
-#define _CRT_SECURE_NO_WARNINGS 1
 #include <stdio.h>
+#include <stdlib.h>
  
-void swap(int* a, int* b) {
-	int tmp = *a;
-	*a = *b;
-	*b = tmp;
-}
  
-// （最大）堆的向下调整算法
-// 注：数组实现的堆中，第N个节点的左孩子的索引值是（2N+1），右孩子的索引是（2N+2）。
-// 其中，N为数组下标索引值，如数组中第1个数对应的N为0。
-// 
-// 参数说明
-// a -- 待排序的数组
-// start -- 被下调节点的起始位置（一般为0，表示从第一个开始）
-// end -- 截止范围（一般为数组中最后一个元素的索引）
+typedef struct node {
+	int num;	//数据域 
+	struct node *next;	//指针域 
+}KeyNode;
  
-void maxheap_sort(int a[], int start,int end) {
-	int c = start; // 当前（current）节点的位置
-	int l = 2 * c + 1; // 左（left）孩子的位置
-	int tmp = a[c]; // 当前（current）节点的大小
-	for (; l <= end; c = l, l = 2 * l + 1) {
-		// “l”是左孩子，“l+1”是右孩子
-		if (l < end && a[l] < a[l + 1]) {
-			l++; // 左右两个孩子中选择较大者，即m_heap[l+1]
-		}
-		if (tmp >= a[l]) {
-			break; // 调整结束
-		}
-		else {// 交换值
-			a[c] = a[l];
-			a[l] = tmp;
-		}
+void bucket_sort(int a[],int size,int bucket_size) {
+	int i,j;        //数组，数组长度，桶的大小
+ 
+                        //定义动态的指针数组
+	KeyNode **bucket_num = (KeyNode **)malloc(bucket_size * sizeof(KeyNode*));
+ 
+	for(i = 0;i < bucket_size;i++) 
+	{
+		bucket_num[i] = (KeyNode*)malloc(sizeof(KeyNode));//为每个链表定义头结点 
+		bucket_num[i]->num = 0;   
+		bucket_num[i]->next = NULL;   //指针变量初始化为空
 	}
-}
  
-// 堆排序（从小到大）
+	for(j = 0;j < size;j++) //准备插入
+	{
+		KeyNode *node = (KeyNode *)malloc(sizeof(KeyNode));//定义一个节点 
+		node->num = a[j];    //数据域存数据 
+		node->next = NULL;	//指向空
+		
+		int index = a[j]/100;  //映射函数 计算桶号
+		
+		KeyNode *p = bucket_num[index];//p指向链表的头
+       
+        //链表结构的插入排序
+		while(p->next != NULL && p->next->num <= node->num)
+		{
+			p = p->next;	//1.链表为空，p->next==NULL，进入不了循环 
+		}					//2.链表不为空，因为链表从无开始按顺序插入，数据为有序的，
+							//可以找到    前一个节点 <= node <=后一个节点
+		
+		//节点插入链表 
+		node->next = p->next;
+		p->next = node;
+		(bucket_num[index]->num)++;	//记录一下该链表中有几个有效节点 
  
-// 参数说明：
-// a -- 待排序的数组
-// n -- 数组的长度
- 
-void heap_sort_asc(int a[], int n) {
-	int i;
-	// 从（n/2-1）--> 0 逐次遍历。遍历之后，得到的数组实际上是一个（最大）二叉堆
-	for (i = n / 2 - 1; i >= 0; i--) {
-		maxheap_sort(a, i, n - 1);
 	}
-	// 从最后一个元素开始对序列进行调整，不断地缩小调整的范围直到第一个元素
-	for (i = n - 1; i > 0; i--) {
-		// 交换a[0]和a[i]。交换后，a[i]是a[0..i]中最大的。
-		swap(&a[0], &a[i]);
-		// 调整a[0..i-1]，使得a[0..i-1]仍然是一个最大堆。
-		// 即，保证a[i-1]是a[0..i-1]中的最大值。
-		maxheap_sort(a, 0, i - 1);
-	}
-}
- 
- 
- 
-int main() {
-	int arr[] = { 9,5,1,6,2,3,0,4,8,7 };
-	heap_sort_asc(arr, 10);
-	for (int i = 0; i < 10; i++) {
-		printf("%d ", arr[i]);
-	}
+	//打印结果
+	KeyNode * k = NULL;  //定义一个空的结构体指针用于储存输出结果
+	for(i = 0;i < bucket_size;i++)
+    {
+        //for(k = bucket_num[i]->next;k!=NULL;k=k->next)//通过最后一个指针指向空
+        k = bucket_num[i]->next;
+        for(int m=0;m<bucket_num[i]->num;m++)   //通过头指针记录节点数
+        {
+            printf("%d ",k->num);
+            k=k->next;
+        }			
+    }		
 	printf("\n");
+}
  
-	return 0;
+ 
+int main()
+{
+	int a[20];
+	 
+	for(int i=0;i<20;i++)
+	{
+		a[i]=rand()%1000;	//给数组赋随机数 
+		printf("%d ",a[i]);
+	}
+	puts("");
+	puts("");
+	//int a[]={491,381,615,917,716,13,217,419,19,138,61,917,176,113,27,419,419,38,615,917,16,113,217,419};
+	int size = sizeof(a)/sizeof(int);    //计算数组长度
+	bucket_sort(a,size,10);//数组名，数组长度，桶的个数 
+   
 }
